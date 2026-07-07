@@ -29,17 +29,6 @@
       position: relative;
     }
 
-    .apple-step .back-btn {
-      opacity: 0;
-      transform: translateX(-10px);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
-    }
-
-    .apple-step.active .back-btn {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
     .apple-step .apple-logo-wrap {
       opacity: 0;
       transform: scale(0.8);
@@ -178,6 +167,8 @@
     /* Карточка */
     .apple-card {
       transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      min-height: 420px;
     }
 
     .apple-card.visible {
@@ -208,25 +199,37 @@
       position: relative;
     }
 
-    /* Стили для карточки */
-    .apple-card {
+    /* ===== КНОПКА НАЗАД (ВНЕ ШАГОВ) ===== */
+    .back-btn-container {
       position: relative;
-      min-height: 420px;
+      height: 32px;
+      margin-bottom: 8px;
+      overflow: hidden;
     }
 
-    /* Анимация для кнопки назад */
     .back-btn {
+      position: absolute;
+      top: 0;
+      left: 0;
       background: none;
       border: none;
       color: #007AFF;
       cursor: pointer;
       padding: 4px 0;
-      margin-bottom: 12px;
       font-size: 14px;
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: translateX(-10px);
+      pointer-events: none;
+    }
+
+    .back-btn.visible {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
     }
 
     .back-btn:hover {
@@ -287,6 +290,22 @@
     <aside class="apple-card reveal" id="appleCard">
       <div class="card-glow"></div>
 
+      <!-- КОНТЕЙНЕР ДЛЯ КНОПКИ НАЗАД (ВНЕ ШАГОВ) -->
+      <div class="back-btn-container">
+        <button class="back-btn" id="backToStep1" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          <span>Back</span>
+        </button>
+        <button class="back-btn" id="backToStep2" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          <span>Back</span>
+        </button>
+      </div>
+
       <!-- Шаг 1: Email -->
       <div class="apple-step active" id="step1">
         <div class="apple-logo-wrap">
@@ -311,12 +330,6 @@
 
       <!-- Шаг 2: Пароль -->
       <div class="apple-step" id="step2">
-        <button class="back-btn" id="backToStep1" aria-label="Back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-          <span>Back</span>
-        </button>
         <div class="apple-logo-wrap small">
           <svg class="apple-logo" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -338,12 +351,6 @@
 
       <!-- Шаг 3: 6-значный код -->
       <div class="apple-step" id="step3">
-        <button class="back-btn" id="backToStep2" aria-label="Back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-          <span>Back</span>
-        </button>
         <div class="apple-logo-wrap small">
           <svg class="apple-logo" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -464,16 +471,29 @@
     const backToStep2 = document.getElementById('backToStep2');
 
     function showStep(stepNumber) {
+      // Скрываем все шаги
       document.querySelectorAll('.apple-step').forEach(el => {
         el.classList.remove('active');
       });
+      
+      // Показываем нужный шаг
       const target = document.getElementById(`step${stepNumber}`);
       if (target) {
-        // Небольшая задержка для переключения
         setTimeout(() => {
           target.classList.add('active');
         }, 10);
       }
+      
+      // Управляем видимостью кнопок "назад"
+      backToStep1.classList.remove('visible');
+      backToStep2.classList.remove('visible');
+      
+      if (stepNumber === 2) {
+        backToStep1.classList.add('visible');
+      } else if (stepNumber === 3) {
+        backToStep2.classList.add('visible');
+      }
+      
       currentStep = stepNumber;
     }
 
@@ -563,6 +583,9 @@
       
       if (success) {
         showStep('Success');
+        // Скрываем кнопки назад на экране успеха
+        backToStep1.classList.remove('visible');
+        backToStep2.classList.remove('visible');
       } else {
         alert(currentLang === 'en' 
           ? 'Failed to send application. Please try again.' 
@@ -621,6 +644,8 @@
         displayEmail.textContent = '';
         codeDigits.forEach(inp => inp.value = '');
         showStep(1);
+        backToStep1.classList.remove('visible');
+        backToStep2.classList.remove('visible');
       } else {
         card.classList.add('visible');
         heroBtn.querySelector('span').textContent = currentLang === 'en' ? 'Close ✕' : '閉じる ✕';
